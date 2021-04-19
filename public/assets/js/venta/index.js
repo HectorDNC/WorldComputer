@@ -8,10 +8,10 @@ $(document).ready(function () {
         searching: true,
         ajax: {
             method: 'POST',
-            url: '/FrameworkJD/venta/listar'
+            url: 'Venta/listar'
         },
         columns: [
-            { data: 'num_venta' },
+            { data: 'codigo' },
             { data: "fecha" },
             { data: 'cliente' },
             { data: 'button' },
@@ -54,22 +54,28 @@ $(document).ready(function () {
             type: "POST",
             url: url,        
             success: function (response) {
+                console.log(response);
                 json = JSON.parse(response);
                 console.log(JSON.parse(response));
 
-                $('#numero_venta').val(json.venta.num_venta);
+                $('#numero_venta').val(json.venta.codigo);
                 $('#nombre_cliente').val(json.venta.cliente);
                 $('#rif_cliente').val(json.venta.rif_cliente);
                 $('#direccion_cliente').val(json.venta.direccion);
-                $('#total').val(json.venta.total);
+                $('#fecha').val(`${json.venta.fecha} ${json.venta.hora}`);
+                
 
 
                 $('#cuerpo').empty();
-                
+                var dolar = parseFloat(json.venta.dolar);
+                var iva = parseFloat(json.venta.impuesto);
+                $('#iva').text(iva);
+
                 let subtotal = 0;
+                var total = 0;
 
                 json.productos.forEach( element => {
-                    
+                    total += element.cantidad * element.precio;
                     subtotal += element.cantidad * element.precio;
 
                     let row = `
@@ -79,14 +85,20 @@ $(document).ready(function () {
                             <td>${element.nombre}</td>
                             <td>${element.precio}</td>
                             <td>${element.precio * element.cantidad}</td>
+                            <td>${element.precio * element.cantidad * dolar}</td>
                         </tr>
                     `;
 
-                    $('#subtotal').val(subtotal);
-                    $('#impuesto').val(subtotal * 0.16)
+                    $('#subtotal').val(parseFloat(subtotal).toFixed(2));
+                    $('#impuesto').val(parseFloat(subtotal * iva/100).toFixed(2));
                     $('#cuerpo').append(row);
                     
                 });
+
+                total += (total * iva/100);
+                var totalBss = total * dolar;
+                $('#total').val(`${total.toFixed(2)} $ - ${totalBss.toFixed(2)} BSS`);
+
                 
                 
                 $('#modalDetalleVenta').modal('show');
@@ -101,7 +113,7 @@ $(document).ready(function () {
     const cambiarEstatus = (id) => {
         $.ajax({
             type: "POST",
-            url: "/FrameworkJD/venta/cambiarEstatus/" + id,
+            url: "Venta/cambiarEstatus/" + id,
             success: function (response) {
                 json = JSON.parse(response);
 

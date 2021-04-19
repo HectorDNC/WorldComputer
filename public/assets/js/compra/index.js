@@ -8,10 +8,10 @@ $(document).ready(function () {
         searching: true,
         ajax: {
             method: 'POST',
-            url: '/FrameworkJD/compra/listar'
+            url: 'compra/listar'
         },
         columns: [
-            { data: 'num_compra' },
+            { data: 'codigo' },
             { data: "fecha" },
             { data: 'proveedor' },
             { data: 'button' },
@@ -54,37 +54,42 @@ $(document).ready(function () {
             type: "POST",
             url: url,        
             success: function (response) {
+                console.log(response);
                 json = JSON.parse(response);
                 console.log(JSON.parse(response));
 
-                $('#numero_compra').val(json.compra.num_compra);
+                $('#numero_compra').val(json.compra.codigo);
                 $('#documento_referencia').val(json.compra.referencia);
                 $('#nombre_proveedor').val(json.compra.proveedor);
                 $('#rif_proveedor').val(json.compra.rif_proveedor);
                 $('#direccion_proveedor').val(json.compra.direccion);
-                $('#total').val(json.compra.total);
+                $('#fecha').val(`${json.compra.fecha} ${json.compra.hora}`);
 
 
                 $('#cuerpo').empty();
-                
+                var dolar = parseFloat(json.compra.dolar);
+                var total = 0;
 
                 json.productos.forEach( element => {
                     
+                    total += (element.costo * element.cantidad);
                     let row = `
                         <tr>
                             <td>${element.cantidad}</td>
                             <td>${element.codigo}</td>
                             <td>${element.nombre}</td>
-                            <td>${element.precio}</td>
-                            <td>${element.precio * element.cantidad}</td>
+                            <td>${element.costo}</td>
+                            <td>${element.costo * element.cantidad}</td>
+                            <td>${element.costo * element.cantidad * dolar}</td>
                         </tr>
                     `;
 
-
+                    
                     $('#cuerpo').append(row);
                     
                 });
-                
+                var totalBss = total * dolar;
+                $('#total').val(`${total} $ - ${totalBss} BSS`);
                 
                 $('#modalDetalleCompra').modal('show');
 
@@ -98,8 +103,10 @@ $(document).ready(function () {
     const cambiarEstatus = (id) => {
         $.ajax({
             type: "POST",
-            url: "/FrameworkJD/compra/cambiarEstatus/" + id,
+            url: "compra/cambiarEstatus/" + id,
             success: function (response) {
+
+                console.log(response);
                 json = JSON.parse(response);
 
                 Swal.fire(

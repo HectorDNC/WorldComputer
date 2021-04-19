@@ -8,7 +8,7 @@ $(document).ready(function () {
         searching: true,
         ajax: {
             method: 'POST',
-            url: '/FrameworkJD/inventario/listar'
+            url: 'inventario/listar'
         },
         columns: [
             { data: 'codigo' },
@@ -18,7 +18,7 @@ $(document).ready(function () {
             { data: 'stock' },
             { data: 'stock_min' },
             { data: 'stock_max' },
-            { data: 'estado' }
+            // { data: 'estado' },
         ],
 
         language: { 
@@ -47,4 +47,142 @@ $(document).ready(function () {
         }
     });
 
+    const mostrarProducto = (href, formulario, modal) => {
+    
+        $.ajax({
+            type: "POST",
+            url: href,
+            success: function (response) {
+                let json = JSON.parse(response);
+    
+                if(modal == '#modalActualizarProducto'){
+
+                    $(formulario).find('input#id').val(json.data.id);
+                    $(formulario).find('input#codigo').val(json.data.codigo);
+                    $(formulario).find('input#nombre').val(json.data.nombre);
+                    $(formulario).find('input#precio').val(json.data.precio);
+                    $(formulario).find('select#categoria').val(json.data.categoria_id);
+                    $(formulario).find('select#unidad').val(json.data.unidad_id);
+                    $(formulario).find('input#porcentaje').val(json.data.porcentaje);
+                    $(formulario).find('textarea#descripcion').val(json.data.descripcion);
+                    $(formulario).find('input#stock_min').val(json.data.stock_min);
+                    $(formulario).find('input#stock_max').val(json.data.stock_max);
+                    $(formulario).find('input#stock').val(json.data.stock);
+                }else{
+                    
+                    $(formulario).find('input#id').val(json.data.id);
+                    $(formulario).find('input#codigo').val(json.data.codigo);
+                    $(formulario).find('input#nombre').val(json.data.nombre);
+                    $(formulario).find('input#categoria').val(json.data.categoria);
+                    $(formulario).find('input#unidad').val(json.data.unidad);
+                    $(formulario).find('input#porcentaje').val(json.data.porcentaje);
+                    $(formulario).find('textarea#descripcion').val(json.data.descripcion);
+                    $(formulario).find('input#stock_min').val(json.data.stock_min);
+                    $(formulario).find('input#stock_max').val(json.data.stock_max);
+                    $(formulario).find('input#stock').val(json.data.stock);
+                }
+    
+                $(modal).modal('show');
+                
+    
+            },
+            error: (response) => {
+                console.log(response);
+            }
+        });
+    }
+
+    const eliminarProducto = (id) => {
+        $.ajax({
+            type: "DELETE",
+            url: "producto/eliminar/" + id,
+            success: function (response) {
+                const json = JSON.parse(response);
+                if(json.tipo == 'success'){
+                    Swal.fire(
+                        'Eliminado!',
+                        'El registro ha sido eliminado!',
+                        'success'
+                        )
+    
+                    table.ajax.reload();
+                }
+            },
+            error: function (response) {
+                console.log(response);
+            }
+        });
+    }
+
+    const habilitarProducto = (id) => {
+        $.ajax({
+            type: "HABILITAR",
+            url: "producto/habilitar/" + id,
+            success: function (response) {
+                const json = JSON.parse(response);
+                if(json.tipo == 'success'){
+                    Swal.fire(
+                        'Activado!',
+                        'El producto ha sido habilitado!',
+                        'success'
+                        )
+    
+                    table.ajax.reload();
+                }
+            },
+            error: function (response) {
+                console.log(response);
+            }
+        });
+    }
+
+    $('body').on('click', '.mostrar', function (e) { 
+        e.preventDefault();
+        console.log($(this).attr('href'));
+        mostrarProducto($(this).attr('href'),'form#formularioMostrarProducto','#modalMostrarProducto');
+    });
+
+    // $('body').on('click', '.estatus', function (e) {
+    //     e.preventDefault();
+    
+    //     Swal.fire({
+    //         title: 'Esta Seguro?',
+    //         text: "El producto será inhabilitado del sistema!",
+    //         type: 'warning',
+    //         showCancelButton: true,
+    //         confirmButtonColor: '#3085d6',
+    //         cancelButtonColor: '#d33',
+    //         cancelButtonText: 'Cancelar',
+    //         confirmButtonText: 'Si, eliminar!'
+    //         }).then((result) => {
+    //         if (result.value) {
+    
+    //             eliminarProducto($(this).attr('href'));
+                
+    //         }
+    //         })
+    //     console.log($(this).attr('href'));
+    // });
+
+    $('body').on('click', '.estatusAnulado', function (e) {
+        e.preventDefault();
+    
+        Swal.fire({
+            title: 'Esta Seguro?',
+            text: "El producto será habilitado en el sistema!",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Si, eliminar!'
+            }).then((result) => {
+            if (result.value) {
+    
+                habilitarProducto($(this).attr('href'));
+                
+            }
+            })
+        console.log($(this).attr('href'));
+    });
 });

@@ -1,0 +1,20 @@
+body{
+    overflow-x: auto !important;
+    padding: 0px !important;
+}
+.card-body{
+    overflow: auto !important;
+}
+.table{
+    margin: auto;
+    width: 100% !important;
+}
+.dropdown-menu a:hover{
+    color: black !important;
+}
+.text-black{
+    color: black !important;
+}
+.dataTables_wrapper{
+    overflow-x: auto;
+}

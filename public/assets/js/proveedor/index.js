@@ -10,7 +10,7 @@ let table = $('#datatable').DataTable({
     searching: true,
     ajax: {
         method: 'POST',
-        url: '/FrameworkJD/proveedor/listar'
+        url: 'Proveedor/listar'
     },
     columns: [
         { data: 'documento' },
@@ -93,7 +93,7 @@ const mostrarProveedor = (href, formulario, modal) => {
 const registrarProveedor = (datos) => {
     $.ajax({
         type: "POST",
-        url: "/FrameworkJD/proveedor/guardar",
+        url: "proveedor/guardar",
         data: datos,
         cache: false,
         contentType: false,
@@ -111,7 +111,7 @@ const registrarProveedor = (datos) => {
     
                 table.ajax.reload();
     
-                $('#modalRegistroProveedor').modal('hide');
+                $('#agregarProveedor').modal('hide');
                 $('#formularioRegistrarProveedor').trigger('reset');
             }else{
                 Swal.fire(
@@ -120,7 +120,7 @@ const registrarProveedor = (datos) => {
                     json.tipo
                 );
             }
-
+            console.log(response);
         },
         error: (response) => {
             console.log(response);
@@ -130,7 +130,7 @@ const registrarProveedor = (datos) => {
 
 
 
-    // fetch('/FrameworkJD/proveedor/guardar', { method: 'POST', body: datos })
+    // fetch('proveedor/guardar', { method: 'POST', body: datos })
     // .then((response) => {
     //     console.log(response);
     //     return response.json();
@@ -153,7 +153,7 @@ const registrarProveedor = (datos) => {
 const actualizarProveedor = (datos) => {
     $.ajax({
         type: "POST",
-        url: "/FrameworkJD/proveedor/actualizar",
+        url: "proveedor/actualizar",
         data: datos,
         cache: false,
         contentType: false,
@@ -188,14 +188,35 @@ const actualizarProveedor = (datos) => {
 
 const eliminarProveedor = (id) => {
     $.ajax({
-        type: "DELETE",
-        url: "/FrameworkJD/proveedor/eliminar/" + id,
+        type: "POST",
+        url: "proveedor/eliminar/" + id,
         success: function (response) {
             const json = JSON.parse(response);
             if(json.tipo == 'success'){
                 Swal.fire(
                     'Eliminado!',
                     'El registro ha sido eliminado!',
+                    'success'
+                    )
+
+                table.ajax.reload();
+            }
+        },
+        error: function (response) {
+            console.log(response);
+        }
+    });
+}
+const habilitar = (id) => {
+    $.ajax({
+        type: "POST",
+        url: GLOBAL.URL+"proveedor/habilitar/" + id,
+        success: function (response) {
+            const json = JSON.parse(response);
+            if(json.tipo == 'success'){
+                Swal.fire(
+                    'Activado!',
+                    'El proveedor ha sido habilitado!',
                     'success'
                     )
 
@@ -270,5 +291,26 @@ $('body').on('click', '.eliminar', function (e) {
         })
     console.log($(this).attr('href'));
 });
+//Activar el registro
+$('body').on('click', '.estatusAnulado', function (e) {
+    e.preventDefault();
 
+    Swal.fire({
+        title: 'Esta Seguro?',
+        text: "El proveedor será habilitado en el sistema!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Si, eliminar!'
+        }).then((result) => {
+        if (result.value) {
+
+            habilitar($(this).attr('href'));
+            
+        }
+        })
+    console.log($(this).attr('href'));
+});
 });

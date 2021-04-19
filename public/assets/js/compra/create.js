@@ -1,9 +1,9 @@
 $(document).ready(function () {
-    
+
     /**
      * FUNCIONES
      */
-    
+    console.log(dolar);
     const buscarProducto = (codigo) => {
 
         let producto = productos.find( element => element.codigo === codigo);
@@ -42,7 +42,7 @@ $(document).ready(function () {
         
         let producto = buscarProducto($('#listadoProductos').val());
         
-        Swal.fire(
+        Toast.fire(
             producto.nombre + ' Agregado',
             'Producto Agregado correctamente',
             'success'   
@@ -52,22 +52,22 @@ $(document).ready(function () {
             <tr>
                 <td>
                     <input type="text" name="productos[]" class="form-control-plaintext" value="${producto.id}" hidden>
-                    <input type="text" name="" class="form-control-plaintext" value="${producto.codigo}" disabled>
-                </td>
-                <td>
                     <input type="text" class="form-control-plaintext" value="${producto.nombre}" disabled>
                 </td>
                 <td>
-                    <input type="number" name="cantidades[]" class="form-control cantidad" value="1" min="1"" required>
+                    <input type="number" name="cantidades[]" step="any" class="form-control cantidad" value="1" min="0" required>
                 </td>
                 <td>
                     <input type="text" class="form-control-plaintext" value="${producto.stock}" disabled>
                 </td>
                 <td>
-                    <input type="number" name="precios[]" class="form-control precio" value="0" min="1" required>
+                    <input type="number" name="precios[]" step="any" class="form-control precio" value="0" min="0" required>
                 </td>
                 <td>
                     <input type="number" class="form-control-plaintext total" value="0" disabled>
+                </td>
+                <td>
+                    <input type="number" class="form-control-plaintext totalBss" value="0" disabled>
                 </td>
                 <td>
                     <button class="btn btn-danger eliminar"><i class="fas fa-trash-alt text-white"></i></button>
@@ -87,8 +87,10 @@ $(document).ready(function () {
 
     let row = $(this).closest('tr');
     let total = row.find('.cantidad').val() * row.find('.precio').val();
+    let totalBss = total*dolar;
 
     row.find('.total').val(total);
+    row.find('.totalBss').val(totalBss);
 
     let elementos = document.querySelectorAll('.total');
 
@@ -97,8 +99,8 @@ $(document).ready(function () {
     elementos.forEach(element => {
         total = parseFloat(total) + parseFloat(element.value);
     })
-
-    $('#totalVenta').val(total);    
+    totalBss = total*dolar;
+    $('#totalVenta').val(`${total} $ - ${totalBss} BSS`);    
     
     });
 
@@ -113,8 +115,16 @@ $(document).ready(function () {
     //Agregar Proveedor
     $('#agregarProveedor').click(function (e) { 
         e.preventDefault();
-
-        Swal.fire(
+        if($('#listadoProveedores').val() == '' || $('#listadoProveedores').val() == null){
+            Toast.fire(
+                'Seleccione un Proveedor',
+                'Debe incluir un proveedor en la compra',
+                'warning'
+            )
+    
+            return false;
+        }
+        Toast.fire(
             'Proveedor agregado!',
             'Se ha seleccionado un proveedor correctamente',
             'success'
@@ -132,7 +142,11 @@ $(document).ready(function () {
 
     $('#formularioCompra').submit(function (e){
         e.preventDefault();
-    
+        var button = $(this).find("[type='submit']");
+        button.attr("disabled",true);
+        setTimeout(() => {
+            button.removeAttr("disabled");
+        }, 1000);
         /**
          * Proveedor
          */
@@ -176,12 +190,13 @@ $(document).ready(function () {
         console.log(total)
     
     
-        
+        $("#dolar").val(dolar);
         $.ajax({
             type: "POST",
             url: form.attr('action'),
             data: form.serialize(),
             success: function (response) {
+                console.log(response);
                json = JSON.parse(response);
                 console.log(json);
 
@@ -193,13 +208,68 @@ $(document).ready(function () {
                 );
 
                 setTimeout(function(){
-                    location.reload();
-                },2000);
+                    window.location = "../Compra";
+                },700);
             },
             error: function (response) {
                 console.log(response);
             }
         });
-    })
+    });
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'bottom-start',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: false,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+      });
+      const registrarProveedor = (datos) => {
+        $.ajax({
+            type: "POST",
+            url: "../proveedor/guardar",
+            data: datos,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                let json = JSON.parse(response);
+                
+                if( json.tipo == 'success'){
+    
+                    Swal.fire(
+                        json.titulo,
+                        json.mensaje,
+                        json.tipo
+                    );
+        
+                    window.location.reload();
+        
+                    $('#agregarProveedor').modal('hide');
+                }else{
+                    Swal.fire(
+                        json.titulo,
+                        json.mensaje,
+                        json.tipo
+                    );
+                }
+                console.log(response);
+            },
+            error: (response) => {
+                console.log(response);
+                
+            }
+        });
+     }
+      // Registrar Proveedor
+    $('#formularioRegistrarProveedor').submit(function (e) { 
+        e.preventDefault();
+
+        let datos = new FormData(document.querySelector('#formularioRegistrarProveedor'));
+        registrarProveedor(datos);   
+    });
 
 });

@@ -10,7 +10,7 @@ let table = $('#datatable').DataTable({
     searching: true,
     ajax: {
         method: 'POST',
-        url: '/FrameworkJD/categoria/listar'
+        url: 'Categoria/listar'
     },
     columns: [
         { data: 'nombre' },
@@ -81,7 +81,7 @@ const registrarCategoria = (datos) => {
 
     $.ajax({
         type: "POST",
-        url: "/FrameworkJD/categoria/guardar",
+        url: "Categoria/guardar",
         data: datos,
         cache: false,
         contentType: false,
@@ -118,7 +118,7 @@ const registrarCategoria = (datos) => {
 
 
 
-    // fetch('/FrameworkJD/categoria/guardar', { method: 'POST', body: datos })
+    // fetch('categoria/guardar', { method: 'POST', body: datos })
     // .then((response) => {
     //     console.log(response);
     //     return response.json();
@@ -141,7 +141,7 @@ const registrarCategoria = (datos) => {
 const actualizarCategoria = (datos) => {
     $.ajax({
         type: "POST",
-        url: "/FrameworkJD/categoria/actualizar",
+        url: "Categoria/actualizar",
         data: datos,
         cache: false,
         contentType: false,
@@ -176,8 +176,8 @@ const actualizarCategoria = (datos) => {
 
 const eliminarCategoria = (id) => {
     $.ajax({
-        type: "DELETE",
-        url: "/FrameworkJD/categoria/eliminar/" + id,
+        type: "POST",
+        url: "Categoria/eliminar/" + id,
         success: function (response) {
             const json = JSON.parse(response);
             if(json.tipo == 'success'){
@@ -195,11 +195,53 @@ const eliminarCategoria = (id) => {
         }
     });
 }
+const habilitar = (id) => {
+    $.ajax({
+        type: "POST",
+        url: GLOBAL.URL+"categoria/habilitar/" + id,
+        success: function (response) {
+            const json = JSON.parse(response);
+            if(json.tipo == 'success'){
+                Swal.fire(
+                    'Activado!',
+                    'La categoría ha sido habilitada!',
+                    'success'
+                    )
+
+                table.ajax.reload();
+            }
+        },
+        error: function (response) {
+            console.log(response);
+        }
+    });
+}
 
 /**
  * Eventos
  */
+//Activar el registro
+$('body').on('click', '.estatusAnulado', function (e) {
+    e.preventDefault();
 
+    Swal.fire({
+        title: 'Esta Seguro?',
+        text: "La categoría será habilitada en el sistema!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Si, eliminar!'
+        }).then((result) => {
+        if (result.value) {
+
+            habilitar($(this).attr('href'));
+            
+        }
+        })
+    console.log($(this).attr('href'));
+});
 $('#formularioRegistrarCategoria').submit(function (e) { 
         e.preventDefault();
 
@@ -257,5 +299,4 @@ $('body').on('click', '.eliminar', function (e) {
         })
     console.log($(this).attr('href'));
 });
-
 });

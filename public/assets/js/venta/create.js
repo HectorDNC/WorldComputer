@@ -42,7 +42,7 @@ $(document).ready(function () {
         
         let producto = buscarProducto($('#listadoProductos').val());
         
-        Swal.fire(
+        Toast.fire(
             producto.nombre + ' Agregado',
             'Producto Agregado correctamente',
             'success'   
@@ -52,24 +52,24 @@ $(document).ready(function () {
             <tr>
                 <td>
                     <input type="text" name="productos[]" class="form-control-plaintext" value="${producto.id}" hidden>
-                    <input type="text" name="" class="form-control-plaintext" value="${producto.codigo}" disabled>
-                </td>
-                <td>
                     <input type="text" class="form-control-plaintext" value="${producto.nombre}" disabled>
                 </td>
                 <td>
-                    <input type="number" name="cantidades[]" class="form-control cantidad" value="1" min="1" max="${producto.stock}" required>
+                    <input type="number" name="cantidades[]" step="any" class="form-control cantidad" value="0" min="0" max="${producto.stock}" required>
                 </td>
                 <td>
                     <input type="text" class="form-control-plaintext" value="${producto.stock}" disabled>
                 </td>
                 <td>
                     <input type="number" class="form-control-plaintext" value="${producto.precio_venta}" disabled>
-                    <input type="number" name="precios[]" class="form-control precio" value="${producto.precio_venta}" hidden required>
+                    <input type="number" name="precios[]" step="any" class="form-control precio" value="${producto.precio_venta}" hidden min="0" required>
 
                 </td>
                 <td>
                     <input type="number" class="form-control-plaintext total" value="0" disabled>
+                </td>
+                <td>
+                    <input type="number" class="form-control-plaintext totalBss" value="0" disabled>
                 </td>
                 <td>
                     <button class="btn btn-danger eliminar"><i class="fas fa-trash-alt text-white"></i></button>
@@ -78,7 +78,7 @@ $(document).ready(function () {
 
         $('#cuerpo').append(fila);
         $('#listadoProductos').val('');
-
+        $('#tproductos').change();
     });
 
 
@@ -89,8 +89,9 @@ $(document).ready(function () {
 
         let row = $(this).closest('tr');
         let total = row.find('.cantidad').val() * row.find('.precio').val();
-
+        let totalBss = total * dolar;
         row.find('.total').val(total.toFixed(2));
+        row.find('.totalBss').val(totalBss.toFixed(2));
 
         let elementos = document.querySelectorAll('.total');
 
@@ -106,7 +107,9 @@ $(document).ready(function () {
 
         $('#impuesto').val(impuestos.toFixed(2));
         $('#subtotal').val(total.toFixed(2));
-        $('#totalVenta').val((total + impuestos).toFixed(2));    
+        totalNeto = total+impuestos;
+        totalNetoBss = totalNeto*dolar;
+        $('#totalVenta').val(`${totalNeto.toFixed(2)} $ - ${totalNetoBss.toFixed(2)} BSS`); 
     
     });
 
@@ -122,7 +125,7 @@ $(document).ready(function () {
     $('#agregarCliente').click(function (e) { 
         e.preventDefault();
 
-        Swal.fire(
+        Toast.fire(
             'Cliente agregado!',
             'Se ha seleccionado un cliente correctamente',
             'success'
@@ -132,7 +135,7 @@ $(document).ready(function () {
 
         $('#cliente').val(cliente.id);
         $('#documentoCliente').val(cliente.documento);
-        $('#nombreCliente').val(cliente.nombre);
+        $('#nombreCliente').val(cliente.nombre+" "+cliente.apellido);
 
         console.log(cliente);
         
@@ -141,10 +144,15 @@ $(document).ready(function () {
     $('#formularioCompra').submit(function (e){
         e.preventDefault();
     
+        var button = $(this).find("[type='submit']");
+        button.attr("disabled",true);
+        setTimeout(() => {
+            button.removeAttr("disabled");
+        }, 1000);
         /**
          * Cliente
          */
-    
+        
         if($('#cliente').val() == '' || $('#cliente').val() == null){
             Swal.fire(
                 'Seleccione un Cliente',
@@ -159,7 +167,7 @@ $(document).ready(function () {
          * Total Venta
          */
     
-        let form = $(this)
+        let form = $(this);
     
         let totalfilas = document.querySelectorAll('.total');
         let total = 0;
@@ -189,15 +197,15 @@ $(document).ready(function () {
     
         console.log(total)
     
-    
-        
+        $("#dolar").val(dolar);        
+        $("#iva").val(iva);        
         $.ajax({
             type: "POST",
             url: form.attr('action'),
             data: form.serialize(),
             success: function (response) {
-                debugger
-               json = JSON.parse(response);
+                console.log(response);
+                json = JSON.parse(response);
                 console.log(json);
 
                 
@@ -206,15 +214,74 @@ $(document).ready(function () {
                     json.mensaje,
                     json.tipo
                 );
-
                 setTimeout(function(){
-                    location.reload();
-                },2000);
+                    window.location = "../Venta";
+                },700);
             },
             error: function (response) {
                 console.log(response);
             }
         });
-    })
+    });
 
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'bottom-start',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: false,
+        didOpen: (toast) => {
+          toast.addEventListener('mouseenter', Swal.stopTimer)
+          toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+    const registrarCliente = (datos) => {
+
+        $.ajax({
+            type: "POST",
+            url: "../cliente/guardar",
+            data: datos,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                let json = JSON.parse(response);
+                
+                if( json.tipo == 'success'){
+    
+                    Swal.fire(
+                        json.titulo,
+                        json.mensaje,
+                        json.tipo
+                    );
+        
+                    window.location.reload();
+        
+                    $('#modalRegistroCliente').modal('hide');
+                }else{
+                    Swal.fire(
+                        json.titulo,
+                        json.mensaje,
+                        json.tipo
+                    );
+                }
+    
+            },
+            error: (response) => {
+                console.log(response);
+                
+            }
+        });
+    }
+    
+
+    $('#formularioRegistrarCliente').submit(function (e) { 
+        e.preventDefault();
+   
+        let datos = new FormData(document.querySelector('#formularioRegistrarCliente'));
+   
+       //  console.log(datos.get('documento'));
+   
+        registrarCliente(datos);   
+   });
 });
